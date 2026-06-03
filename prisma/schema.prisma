@@ -1,0 +1,128 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id         String      @id @default(uuid())
+  name       String?
+  email      String      @unique
+  password   String
+  role       String      @default("USER") // "ADMIN", "USER"
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  orders     Order[]
+  quotations Quotation[]
+
+  @@index([email])
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id                String          @id @default(uuid())
+  name              String
+  sku               String          @unique
+  description       String?
+  categoryId        String
+  category          Category        @relation(fields: [categoryId], references: [id])
+  baseUnit          String          // "g", "kg", "mL", "L", "items"
+  basePrice         Decimal
+  inventoryQuantity Decimal
+  density           Decimal?        @default(1.0)
+  imageUrl          String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  orderItems        OrderItem[]
+  quotationItems    QuotationItem[]
+  inventoryLogs     InventoryLog[]
+
+  @@index([categoryId])
+  @@index([sku])
+}
+
+model InventoryLog {
+  id             String                   @id @default(uuid())
+  productId      String
+  product        Product                  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  changeQuantity Decimal
+  type           String                   // "STOCK_IN", "STOCK_OUT", "ADJUSTMENT", "SALE", "RETURN"
+  referenceId    String?
+  notes          String?
+  createdAt      DateTime                 @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      String      @default("PENDING") // "PENDING", "APPROVED", "REJECTED", "COMPLETED"
+  totalAmount Decimal
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  items       OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id                       String   @id @default(uuid())
+  orderId                  String
+  order                    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId                String
+  product                  Product  @relation(fields: [productId], references: [id])
+  orderedQuantity          Decimal
+  orderedUnit              String
+  calculatedQuantityInBase Decimal
+  pricePerUnit             Decimal
+  subtotal                 Decimal
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Quotation {
+  id          String          @id @default(uuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      String          @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  totalAmount Decimal
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  items       QuotationItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model QuotationItem {
+  id                       String    @id @default(uuid())
+  quotationId              String
+  quotation                Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  productId                String
+  product                  Product   @relation(fields: [productId], references: [id])
+  quantity                 Decimal
+  unit                     String
+  calculatedQuantityInBase Decimal
+  pricePerUnit             Decimal
+  subtotal                 Decimal
+
+  @@index([quotationId])
+  @@index([productId])
+}
