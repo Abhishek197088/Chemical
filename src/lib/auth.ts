@@ -3,6 +3,13 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import prisma from "./prisma";
 
+// NextAuth configuration adjustments for Vercel
+if (process.env.VERCEL || process.env.NOW_BUILDER) {
+  if (process.env.NEXTAUTH_URL && (process.env.NEXTAUTH_URL.includes("localhost") || process.env.NEXTAUTH_URL.includes("3000"))) {
+    delete process.env.NEXTAUTH_URL;
+  }
+}
+
 export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({

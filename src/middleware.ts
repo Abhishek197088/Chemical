@@ -35,6 +35,7 @@ export default withAuth(
     callbacks: {
       authorized: ({ token }) => !!token,
     },
+    secret: process.env.NEXTAUTH_SECRET || "h4ck4th0n_s3cr3t_jWt_k3y_s0m3_r4nd0m_v4lu3",
   }
 );
 
